@@ -1,30 +1,38 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mediturno/core/services/notification_service.dart';
+import 'package:mediturno/features/appointments/data/appointment_repository_impl.dart';
+import 'package:mediturno/features/catalog/data/catalog_repository_impl.dart';
+import 'package:mediturno/features/patient/data/patient_repository_impl.dart';
 import 'package:mediturno/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('MediTurno Smoke Test - Carga de interfaz y navegación', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    final notifService = LocalNotificationServiceImpl();
+    final patientRepo = PatientRepositoryImpl();
+    final catalogRepo = CatalogRepositoryImpl();
+    final appointmentRepo = AppointmentRepositoryImpl(notifService);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.pumpWidget(
+      MediTurnoApp(
+        notificationService: notifService,
+        patientRepository: patientRepo,
+        catalogRepository: catalogRepo,
+        appointmentRepository: appointmentRepo,
+      ),
+    );
+
+    // Permitir la inicialización asíncrona de providers
+    await tester.pumpAndSettle();
+
+    // Comprobar que los elementos de navegación y bienvenida se renderizan
+    expect(find.text('Inicio'), findsWidgets);
+    expect(find.text('Directorio'), findsWidgets);
+    expect(find.text('Mis Citas'), findsWidgets);
+    expect(find.text('Perfil'), findsWidgets);
   });
 }
